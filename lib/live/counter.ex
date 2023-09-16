@@ -21,20 +21,13 @@ defmodule CounterWeb.Counter do
     {:noreply, update(socket, :val, &(&1 - 1))}
   end
 
-  def handel_info(msg, socket) do
+  def handle_info(msg, socket) do
     {:noreply, assign(socket, val: msg.payload.val)}
   end
 
   def render(assigns) do
     ~H"""
-    <div>
-      <h1 class="text-4xl font-bold text-center">Counter: <%= @val %></h1>
-
-      <p class="text-center">
-        <.button phx-click="dec">-</.button>
-        <.button phx-click="inc">+</.button>
-      </p>
-    </div>
+    <.live_component module={CounterComponent} id="counter" val={@val} />
     """
   end
 end
