@@ -1,33 +1,35 @@
 defmodule CounterWeb.Counter do
   use CounterWeb, :live_view
+  alias Counter.Count
+  alias Phoenix.PubSub
 
-  # The topic is used to identify the LiveView process
-  @topic "live"
+  @topic Count.topic()
 
   def mount(_params, _session, socket) do
-    CounterWeb.Endpoint.subscribe(@topic)
-    {:ok, assign(socket, :val, 0)}
+    PubSub.subscribe(Counter.PubSub, @topic)
+
+    {:ok, assign(socket, val: Count.current())}
   end
 
   def handle_event("inc", _, socket) do
-    new_state = update(socket, :val, &(&1 + 1))
-    CounterWeb.Endpoint.broadcast_from(self(), @topic, "inc", new_state.assigns)
-    {:noreply, new_state}
+    {:noreply, assign(socket, :val, Count.incr())}
   end
 
   def handle_event("dec", _, socket) do
-    new_state = update(socket, :val, &(&1 - 1))
-    CounterWeb.Endpoint.broadcast_from(self(), @topic, "dec", new_state.assigns)
-    {:noreply, update(socket, :val, &(&1 - 1))}
+    {:noreply, assign(socket, :val, Count.decr())}
   end
 
-  def handle_info(msg, socket) do
-    {:noreply, assign(socket, val: msg.payload.val)}
+  def handle_info({:count, count}, socket) do
+    {:noreply, assign(socket, val: count)}
   end
 
   def render(assigns) do
     ~H"""
-    <.live_component module={CounterComponent} id="counter" val={@val} />
+    <div>
+      <h1>Counter: <%= @val %></h1>
+      <.button phx-click="dec">-</.button>
+      <.button phx-click="inc">+</.button>
+    </div>
     """
   end
 end
